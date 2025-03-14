@@ -6,22 +6,16 @@
  * Use of this source code is governed by an MIT-style license that can be
  * found in the LICENSE file at https://angular.dev/license
  */
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __exportStar = (this && this.__exportStar) || function(m, exports) {
-    for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-__exportStar(require("./normalize-asset-patterns"), exports);
-__exportStar(require("./normalize-optimization"), exports);
-__exportStar(require("./normalize-source-maps"), exports);
-__exportStar(require("./load-proxy-config"), exports);
+exports.markTopLevelPure = exports.elideAngularMetadata = exports.adjustTypeScriptEnums = exports.adjustStaticMembers = void 0;
+var adjust_static_class_members_1 = require("./adjust-static-class-members");
+Object.defineProperty(exports, "adjustStaticMembers", { enumerable: true, get: function () { return __importDefault(adjust_static_class_members_1).default; } });
+var adjust_typescript_enums_1 = require("./adjust-typescript-enums");
+Object.defineProperty(exports, "adjustTypeScriptEnums", { enumerable: true, get: function () { return __importDefault(adjust_typescript_enums_1).default; } });
+var elide_angular_metadata_1 = require("./elide-angular-metadata");
+Object.defineProperty(exports, "elideAngularMetadata", { enumerable: true, get: function () { return __importDefault(elide_angular_metadata_1).default; } });
+var pure_toplevel_functions_1 = require("./pure-toplevel-functions");
+Object.defineProperty(exports, "markTopLevelPure", { enumerable: true, get: function () { return __importDefault(pure_toplevel_functions_1).default; } });

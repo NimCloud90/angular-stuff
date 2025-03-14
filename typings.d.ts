@@ -6,21 +6,16 @@
  * found in the LICENSE file at https://angular.dev/license
  */
 
-// The `bundled_beasties` causes issues with module mappings in Bazel,
-// leading to unexpected behavior with esbuild. Specifically, the problem occurs
-// when esbuild resolves to a different module or version than expected, due to
-// how Bazel handles module mappings.
-//
-// This change aims to resolve esbuild types correctly and maintain consistency
-// in the Bazel build process.
-
-declare module 'esbuild' {
-  export * from 'esbuild-wasm';
+declare module '@babel/helper-annotate-as-pure' {
+  export default function annotateAsPure(
+    pathOrNode: import('@babel/types').Node | { node: import('@babel/types').Node },
+  ): void;
 }
 
-/**
- * Augment the Node.js module builtin types to support the v22.8+ compile cache functions
- */
-declare module 'node:module' {
-  function getCompileCacheDir(): string | undefined;
+declare module '@babel/helper-split-export-declaration' {
+  export default function splitExportDeclaration(
+    exportDeclaration: import('@babel/core').NodePath<
+      import('@babel/types').ExportDefaultDeclaration
+    >,
+  ): void;
 }
