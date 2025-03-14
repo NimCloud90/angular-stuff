@@ -1,41 +1,21 @@
 /**
- * Extract i18n target options for Build Facade.
+ * ng-packagr target options for Build Architect. Use to build library projects.
  */
 export type Schema = {
     /**
-     * A builder target to extract i18n messages in the format of
-     * `project:target[:configuration]`. You can also pass in more than one configuration name
-     * as a comma-separated list. Example: `project:target:production,staging`.
+     * Enable and define the file watching poll time period in milliseconds.
      */
-    buildTarget?: string;
+    poll?: number;
     /**
-     * Output format for the generated file.
+     * The file path for the ng-packagr configuration file, relative to the current workspace.
      */
-    format?: Format;
+    project: string;
     /**
-     * Name of the file to output.
+     * The full path for the TypeScript configuration file, relative to the current workspace.
      */
-    outFile?: string;
+    tsConfig?: string;
     /**
-     * Path where output will be placed.
+     * Run build when files change.
      */
-    outputPath?: string;
-    /**
-     * Log progress to the console.
-     */
-    progress?: boolean;
+    watch?: boolean;
 };
-/**
- * Output format for the generated file.
- */
-export declare enum Format {
-    Arb = "arb",
-    Json = "json",
-    LegacyMigrate = "legacy-migrate",
-    Xlf = "xlf",
-    Xlf2 = "xlf2",
-    Xlif = "xlif",
-    Xliff = "xliff",
-    Xliff2 = "xliff2",
-    Xmb = "xmb"
-}

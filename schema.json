@@ -1,33 +1,27 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema",
-  "title": "Extract i18n Target",
-  "description": "Extract i18n target options for Build Facade.",
+  "title": "ng-packagr Target",
+  "description": "ng-packagr target options for Build Architect. Use to build library projects.",
   "type": "object",
   "properties": {
-    "buildTarget": {
+    "project": {
       "type": "string",
-      "description": "A builder target to extract i18n messages in the format of `project:target[:configuration]`. You can also pass in more than one configuration name as a comma-separated list. Example: `project:target:production,staging`.",
-      "pattern": "^[^:\\s]*:[^:\\s]*(:[^\\s]+)?$"
+      "description": "The file path for the ng-packagr configuration file, relative to the current workspace."
     },
-    "format": {
+    "tsConfig": {
       "type": "string",
-      "description": "Output format for the generated file.",
-      "default": "xlf",
-      "enum": ["xmb", "xlf", "xlif", "xliff", "xlf2", "xliff2", "json", "arb", "legacy-migrate"]
+      "description": "The full path for the TypeScript configuration file, relative to the current workspace."
     },
-    "progress": {
+    "watch": {
       "type": "boolean",
-      "description": "Log progress to the console.",
-      "default": true
+      "description": "Run build when files change.",
+      "default": false
     },
-    "outputPath": {
-      "type": "string",
-      "description": "Path where output will be placed."
-    },
-    "outFile": {
-      "type": "string",
-      "description": "Name of the file to output."
+    "poll": {
+      "type": "number",
+      "description": "Enable and define the file watching poll time period in milliseconds."
     }
   },
-  "additionalProperties": false
+  "additionalProperties": false,
+  "required": ["project"]
 }

@@ -39,117 +39,65 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.execute = execute;
-const node_fs_1 = __importDefault(require("node:fs"));
-const node_path_1 = __importDefault(require("node:path"));
-const load_esm_1 = require("../../utils/load-esm");
-const version_1 = require("../../utils/version");
-const options_1 = require("./options");
-const schema_1 = require("./schema");
+const node_path_1 = require("node:path");
+const error_1 = require("../../utils/error");
+const normalize_cache_1 = require("../../utils/normalize-cache");
+const purge_cache_1 = require("../../utils/purge-cache");
 /**
+ * A Builder that executes the `ng-packagr` tool to build an Angular library.
+ *
+ * @param options The builder options as defined by the JSON schema.
+ * @param context A BuilderContext instance.
+ * @returns A BuilderOutput object.
+ *
  * @experimental Direct usage of this function is considered experimental.
  */
-async function execute(options, context, extensions) {
-    // Determine project name from builder context target
+async function* execute(options, context) {
+    // Purge old build disk cache.
+    await (0, purge_cache_1.purgeStaleBuildCache)(context);
+    const root = context.workspaceRoot;
+    let packager;
+    try {
+        packager = (await Promise.resolve().then(() => __importStar(require('ng-packagr')))).ngPackagr();
+    }
+    catch (error) {
+        (0, error_1.assertIsError)(error);
+        if (error.code === 'MODULE_NOT_FOUND') {
+            return {
+                success: false,
+                error: 'The "ng-packagr" package was not found. To correct this error, ensure this package is installed in the project.',
+            };
+        }
+        throw error;
+    }
+    packager.forProject((0, node_path_1.resolve)(root, options.project));
+    if (options.tsConfig) {
+        packager.withTsConfig((0, node_path_1.resolve)(root, options.tsConfig));
+    }
     const projectName = context.target?.project;
     if (!projectName) {
-        context.logger.error(`The 'extract-i18n' builder requires a target to be specified.`);
-        return { success: false };
+        throw new Error('The builder requires a target.');
     }
-    const { projectType } = (await context.getProjectMetadata(projectName));
-    if (projectType !== 'application') {
-        context.logger.error(`Tried to extract from ${projectName} with 'projectType' ${projectType}, which is not supported.` +
-            ` The 'extract-i18n' builder can only extract from applications.`);
-        return { success: false };
-    }
-    // Check Angular version.
-    (0, version_1.assertCompatibleAngularVersion)(context.workspaceRoot);
-    // Load the Angular localize package.
-    // The package is a peer dependency and might not be present
-    let localizeToolsModule;
-    try {
-        localizeToolsModule =
-            await (0, load_esm_1.loadEsmModule)('@angular/localize/tools');
-    }
-    catch {
-        return {
-            success: false,
-            error: `i18n extraction requires the '@angular/localize' package.` +
-                ` You can add it by using 'ng add @angular/localize'.`,
-        };
-    }
-    // Normalize options
-    const normalizedOptions = await (0, options_1.normalizeOptions)(context, projectName, options);
-    const builderName = await context.getBuilderNameForTarget(normalizedOptions.buildTarget);
-    // Extract messages based on configured builder
-    const { extractMessages } = await Promise.resolve().then(() => __importStar(require('./application-extraction')));
-    const extractionResult = await extractMessages(normalizedOptions, builderName, context, localizeToolsModule.MessageExtractor, extensions);
-    if (!extractionResult.success) {
-        return { success: false };
-    }
-    // Perform duplicate message checks
-    const { checkDuplicateMessages } = localizeToolsModule;
-    // The filesystem is used to create a relative path for each file
-    // from the basePath.  This relative path is then used in the error message.
-    const checkFileSystem = {
-        relative(from, to) {
-            return node_path_1.default.relative(from, to);
-        },
+    const metadata = await context.getProjectMetadata(projectName);
+    const { enabled: cacheEnabled, path: cacheDirectory } = (0, normalize_cache_1.normalizeCacheOptions)(metadata, context.workspaceRoot);
+    const ngPackagrOptions = {
+        cacheEnabled,
+        poll: options.poll,
+        cacheDirectory: (0, node_path_1.join)(cacheDirectory, 'ng-packagr'),
     };
-    const diagnostics = checkDuplicateMessages(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    checkFileSystem, extractionResult.messages, 'warning', 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    extractionResult.basePath);
-    if (diagnostics.messages.length > 0) {
-        context.logger.warn(diagnostics.formatDiagnostics(''));
+    try {
+        if (options.watch) {
+            await packager.watch(ngPackagrOptions).toPromise();
+        }
+        else {
+            await packager.build(ngPackagrOptions);
+        }
+        yield { success: true };
     }
-    // Serialize all extracted messages
-    const serializer = await createSerializer(localizeToolsModule, normalizedOptions.format, normalizedOptions.i18nOptions.sourceLocale, extractionResult.basePath, extractionResult.useLegacyIds, diagnostics);
-    const content = serializer.serialize(extractionResult.messages);
-    // Ensure directory exists
-    const outputPath = node_path_1.default.dirname(normalizedOptions.outFile);
-    if (!node_fs_1.default.existsSync(outputPath)) {
-        node_fs_1.default.mkdirSync(outputPath, { recursive: true });
-    }
-    // Write translation file
-    node_fs_1.default.writeFileSync(normalizedOptions.outFile, content);
-    if (normalizedOptions.progress) {
-        context.logger.info(`Extraction Complete. (Messages: ${extractionResult.messages.length})`);
-    }
-    return { success: true, outputPath: normalizedOptions.outFile };
-}
-async function createSerializer(localizeToolsModule, format, sourceLocale, basePath, useLegacyIds, diagnostics) {
-    const { XmbTranslationSerializer, LegacyMessageIdMigrationSerializer, ArbTranslationSerializer, Xliff1TranslationSerializer, Xliff2TranslationSerializer, SimpleJsonTranslationSerializer, } = localizeToolsModule;
-    switch (format) {
-        case schema_1.Format.Xmb:
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            return new XmbTranslationSerializer(basePath, useLegacyIds);
-        case schema_1.Format.Xlf:
-        case schema_1.Format.Xlif:
-        case schema_1.Format.Xliff:
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            return new Xliff1TranslationSerializer(sourceLocale, basePath, useLegacyIds, {});
-        case schema_1.Format.Xlf2:
-        case schema_1.Format.Xliff2:
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            return new Xliff2TranslationSerializer(sourceLocale, basePath, useLegacyIds, {});
-        case schema_1.Format.Json:
-            return new SimpleJsonTranslationSerializer(sourceLocale);
-        case schema_1.Format.LegacyMigrate:
-            return new LegacyMessageIdMigrationSerializer(diagnostics);
-        case schema_1.Format.Arb:
-            return new ArbTranslationSerializer(sourceLocale, 
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            basePath, {
-                relative(from, to) {
-                    return node_path_1.default.relative(from, to);
-                },
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            });
+    catch (error) {
+        (0, error_1.assertIsError)(error);
+        yield { success: false, error: error.message };
     }
 }

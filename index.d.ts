@@ -7,7 +7,7 @@
  */
 import { Builder } from '@angular-devkit/architect';
 import { execute } from './builder';
-import type { Schema as ExtractI18nBuilderOptions } from './schema';
-export { ExtractI18nBuilderOptions, execute };
-declare const builder: Builder<ExtractI18nBuilderOptions>;
+import type { Schema as NgPackagrBuilderOptions } from './schema';
+export { type NgPackagrBuilderOptions, execute };
+declare const builder: Builder<NgPackagrBuilderOptions>;
 export default builder;
