@@ -5,7 +5,5 @@
  * Use of this source code is governed by an MIT-style license that can be
  * found in the LICENSE file at https://angular.dev/license
  */
-export * from './normalize-asset-patterns';
-export * from './normalize-optimization';
-export * from './normalize-source-maps';
-export * from './load-proxy-config';
+import { SourceMapClass, SourceMapUnion } from '../builders/application/schema';
+export declare function normalizeSourceMaps(sourceMap: SourceMapUnion): SourceMapClass;
