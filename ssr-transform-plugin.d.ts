@@ -6,9 +6,4 @@
  * found in the LICENSE file at https://angular.dev/license
  */
 import type { Plugin } from 'vite';
-/**
- * Creates a Vite plugin that resolves Angular locale data files from `@angular/common`.
- *
- * @returns A Vite plugin.
- */
-export declare function createAngularLocaleDataPlugin(): Plugin;
+export declare function createAngularSsrTransformPlugin(workspaceRoot: string): Promise<Plugin>;
